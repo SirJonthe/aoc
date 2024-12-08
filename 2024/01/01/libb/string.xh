@@ -1,0 +1,10 @@
+/// @brief Returns the number of characters in a null-terminated string.
+/// @param str The string to measure the length of.
+/// @return The length of the string.
+/// @note The returned length does not include the null character itself.
+strlen(str);
+
+/// @brief Converts a string to a number.
+/// @param str The string.
+/// @return The number.
+atoi(str);

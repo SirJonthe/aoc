@@ -1,0 +1,29 @@
+#include <_exit>
+#include <stddef>
+
+auto __exitfn = NULL; // A custom function called when the program exits.
+
+atexit(fn)
+{
+	__exitfn = fn;
+}
+
+auto __exitlock = 0; // A lock preventing the exit function from being called recursively.
+
+exit(status)
+{
+	if (__exitlock > 0) {
+		return -1;
+	}
+	__exitlock = __exitlock + 1;
+	if (__exitfn != NULL) {
+		__exitfn();
+	}
+	asm {
+		// TODO set the 'status' return value
+		ldb.
+		lda.
+		jmp.
+	}
+	// NOTE: Return instructions here will never be reached.
+}

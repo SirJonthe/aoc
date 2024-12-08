@@ -1,0 +1,88 @@
+enum {
+	PACKET_HEADER_ID,       // The ID of the sending device.
+	PACKET_HEADER_CLOCK,    // The clock as reported by the sending device.
+	PACKET_HEADER_TYPE,     // See TYPE_*.
+	PACKET_HEADER_SEQ,      // The index of a segmented message.
+	PACKET_HEADER_SIZE,     // The number of words in the payload.
+	PACKET_HEADER_IRQ,      // The IRQ to call on the receiving device.
+	PACKET_HEADER_MID,      // The message ID.
+	PACKET_HEADER_WORD_SIZE // The number of words in the packet header.
+};
+
+/// @brief Returns the CPU ID (unique to the CPU architecture).
+/// @return The CPU ID.
+cpuid( void );
+
+/// @brief Returns the device ID (unique to this instance of device).
+/// @return The device ID.
+did( void );
+
+/// @brief Checks if the input buffer on the device connected at the given port is full.
+/// @return 1 if the device connected on the given port has a full input buffer. 0 otherwise.
+/// @note It is assumed that a device is connected on the given port.
+hwfull(port_index);
+
+/// @brief Sends data to a device at a given port with a user-defined message type.
+/// @param port_index The port to send the data to.
+/// @param msg_type The type of the message.
+/// @param data_ptr Pointer to data to send to the port.
+/// @param len The number of data points to send to the port in words. If this is greater than the maximum payload size then several indexed packages will be sent.
+/// @param max_ms The maximum number of milliseconds the application will wait for the device at the port to receive the full message before returning 0.
+/// @return 1 if the port received the full message, 0 if it did not.
+/// @note If there is no device connected to the port, the program will stall for the maximum number of time.
+hwpusht(port_index, msg_type, data_ptr, len, max_ms);
+
+/// @brief Sends data to a device at a given port, with the DATA message type.
+/// @param port_index The port to send the data to.
+/// @param data_ptr Pointer to data to send to the port.
+/// @param len The number of data points to send to the port in words. If this is greater than the maximum payload size then several indexed packages will be sent.
+/// @param max_ms The maximum number of milliseconds the application will wait for the device at the port to receive the full message before returning 0.
+/// @return 1 if the port received the full message, 0 if it did not.
+/// @note If there is no device connected to the port, the program will stall for the maximum number of time.
+hwpush(port_index, data_ptr, len, max_ms);
+
+/// @brief Checks a given port if its input buffer has pending messages for the computer to consume.
+/// @param port_index The port index to check for pending messages.
+/// @return 1 if the given port has pending messages on its bus. 0 otherwise.
+/// @sa hwpeek
+/// @sa hwpoll
+hwpend(port_index);
+
+/// @brief Does a scan of the given port to retrieve the hardware ID of the connected device.
+/// @param port_index The port to scan.
+/// @return The hardware ID of the device connected at the port. 0 if there is no device connected.
+/// @note There is no way of knowing for sure if there is a device connected on a port other than to see if there are pending messages on the bus or if a potential device responds to a ping. If a ping is sent, this function may block for up to a second while polling the bus for a response message. After the time is up the function abandons its retries. However, a device could still potentially be connected, just too busy to respond on time or its message buffer being full and dropping messages.
+hwid(port_index);
+
+/// @brief Scans all available ports to look for a connected device with the requested hardware ID.
+/// @param id The hardware ID of the requested device.
+/// @return The port in which a device of the given hardware ID is plugged in. Returns -1 if the device was not found.
+hwscan(id);
+
+/// @brief Attempts to poll a message from a specific port index. Does not consume the message.
+/// @param port_index The port to sniff for a message.
+/// @param header_ptr Pointer to the packet header.
+/// @param data_ptr Pointer to the packet payload.
+/// @return 1 if there was a message to consume. 0 otherwise.
+hwpeek(port_index, header_ptr, data_ptr);
+
+/// @brief Attempts to poll a message from a specific port index. Consumes the message. If there is an IRQ function associated with the header IRQ request, that function is executed.
+/// @param port_index The port to sniff for a message.
+/// @param header_ptr Pointer to the packet header.
+/// @param data_ptr Pointer to the packet payload.
+/// @return 1 if there was a message to consume. 0 otherwise.
+hwpoll(port_index, header_ptr, data_ptr);
+
+/// @brief Puts execution of the application to sleep for a specified number of milliseconds.
+/// @param ms The time to sleep in milliseconds.
+/// @note Sleeps at least the specified number of milliseconds, but may sleep more.
+sleep(ms);
+
+/// @brief Runs a binary file as a program. Returns execution here only once the program is done running.
+/// @param bin The name of the file containing the binary to run.
+run(bin);
+
+/// @brief Turns the computer off.
+/// @note The processor has no control to turn the computer off, so it relies on a specific type of circuit breaker being connected to the machine which it can communicate with.
+/// @warning Use this sparingly.
+shutdown( void );

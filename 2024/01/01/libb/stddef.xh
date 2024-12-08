@@ -1,0 +1,3 @@
+const NULL  =  0; // Null value.
+const TRUE  =  1; // Boolean true.
+const FALSE =  0; // Boolean false.

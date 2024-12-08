@@ -1,0 +1,34 @@
+# About
+The solution to day 1, part 1 of Advent of Code 2024.
+
+# Notes
+I have only tested if this works on x86/x64 Linux. There is a good chance that this will not compile on other platforms, and a good chance that the program will not behave correctly under ARM.
+
+# Compiling
+Install `SDL2` development files.
+
+Then, compile the computer using the Makefile
+```
+make computer
+```
+
+When successful this will create a native binary, `computer`. Then compile the solution ROM:
+```
+make solution
+```
+
+When successful, this will create a ROM named `solution.rom`.
+
+# Running
+If the compilation of the computer and the ROM were successful, use the Makefile and type:
+```
+make run
+```
+
+This will boot the computer, load the ROM, and then execute it.
+
+# Debugging
+The ROM binary can be debugged by stepping through its assembly. Using the Makefile, type:
+```
+make debug
+```

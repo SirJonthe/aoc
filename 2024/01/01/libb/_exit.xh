@@ -1,0 +1,11 @@
+// We split this out into a separate header from <stdlib> because a program will always make a call to 'exit' when it ends, but we want to avoid pulling in <stdlib> unnecessarily to bloat small programs. Now we only need to pull in <_exit> for all programs, which only results in minimal overhead to the binary.
+
+/// @brief Sets a function to call before the program finally returns execution to the host program.
+/// @param  fn The function to call before the program finally returns execution to the host program.
+atexit(fn);
+
+/// @brief Exits the current program and returns execution to the host program.
+/// @param status The exit status to return to the host program.
+/// @return Nothing. However the host program will receive a return value from this program corresponding to 'status'.
+/// @note This function is implicitly called after execution of 'main' even if it is not explicitly called.
+exit(status);

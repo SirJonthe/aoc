@@ -1,0 +1,20 @@
+#include <time>
+
+/// @brief Returns the raw clock state of the CPU clock.
+/// @return The raw clock state of the CPU clock.
+__cpu_clock( void )
+{
+	auto c;
+	asm {
+		clock.
+		mov c.
+	}
+	return c;
+}
+
+auto __clock_appstart = __cpu_clock(); // The state of the clock when the application started.
+
+clock( void )
+{
+	return __cpu_clock() - __clock_appstart;
+}

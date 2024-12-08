@@ -1,0 +1,105 @@
+#include <stdlib>
+
+auto __rand_x     = 0; // Random state variable.
+auto __rand_y     = 0; // Random state variable.
+auto __rand_z     = 0; // Random state variable.
+auto __rand_state = 1; // Random state variable.
+
+rand( void )
+{
+	auto t = __rand_x ^ (__rand_x << 4);
+	__rand_x     = __rand_y;
+	__rand_y     = __rand_z;
+	__rand_z     = __rand_state;
+	__rand_state = __rand_z ^ t ^ (__rand_z >> 1) ^ (t << 1);
+	return __rand_state;
+}
+
+srand(seed)
+{
+	__rand_x     = 0;
+	__rand_y     = 0;
+	__rand_z     = 0;
+	__rand_state = seed;
+}
+
+const __HEAP_SIZE   = 1024;  // The size of the heap. This probably needs to be relatively small on an resource constrained system.
+auto  __heap[__HEAP_SIZE];   // The local heap.
+auto  __free_list   = NULL;  // A pointer to the first free block in the heap.
+auto  __malloc_init = FALSE; // Determines if the memory allocator has been initialized.
+
+malloc(size)
+{
+	enum { SIZE, NEXT, HEADER_SIZE };
+
+	if (__malloc_init == FALSE) {
+		__malloc_init     = TRUE;
+		__free_list       = __heap;
+		__free_list[SIZE] = __HEAP_SIZE - HEADER_SIZE;
+		__free_list[NEXT] = NULL;
+	}
+
+	size      += HEADER_SIZE;
+	auto curr =  __free_list;
+	auto prev =  NULL;
+	
+	// Look for continuous memory to reserve.
+	while (curr != NULL) {
+		if (curr[SIZE] >= size) {
+			if (curr[SIZE] - size > HEADER_SIZE) {
+				// If there is space for a header, split the block
+				auto new_block  = curr + size;
+				new_block[SIZE] = curr[SIZE] - size;
+				new_block[NEXT] = curr[NEXT];
+				curr[SIZE]      = size;
+				curr[NEXT]      = new_block;
+			}
+			// Remove allocated block from the free memory list.
+			if (prev == NULL) {
+				__free_list = curr[NEXT];
+			} else {
+				prev[NEXT] = curr[NEXT];
+			}
+			return curr + HEADER_SIZE;
+		}
+		prev = curr;
+		curr = curr[NEXT];
+	}
+	
+	// TODO: If we get here, we are out of local memory. Instead of failing immediately, we could implement a much larger, dynamically resizeable global heap shared between all applications, starting at adress 0xffff moving downward. Using the value at 0xffff as determinant for overall global heap size.
+
+	// Out of continuous memory.
+	return NULL;
+}
+
+calloc(size)
+{
+	auto mem = malloc(size);
+	auto i = 0;
+	while (i < size) {
+		mem[i] = 0;
+		++i;
+	}
+	return mem;
+}
+
+free(ptr)
+{
+	enum { SIZE, NEXT, HEADER_SIZE };
+
+	if (ptr == NULL) { return; }
+
+	if (ptr >= __heap && ptr < __heap + __HEAP_SIZE) { // If the pointer is in the local heap, delete from there.
+		auto block = ptr - HEADER_SIZE;
+		block[NEXT] = __free_list;
+		__free_list = block;
+	} // else if (ptr >= (0xffff - *0xffff) && ptr < 0xffff) {} // Otherwise delete from the global heap.
+}
+
+abs(a)
+{
+	if (a < 0) {
+		return -a;
+	}
+	return a;
+}

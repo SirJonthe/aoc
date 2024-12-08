@@ -1,0 +1,40 @@
+/// @brief Prints the text to standard out.
+/// @param text The text to print.
+print(text);
+
+/// @brief Prints the text to standard out including formatted values.
+/// @param format The text to print, given the format.
+/// @param values The lookup table of balues to print using the format text.
+printf(format, values);
+
+/// @brief Opens a file.
+/// @param file The name of the file to open.
+/// @param mode The mode of opening the file.
+/// @return A function pointer to the opened file. 
+fopen(file, mode);
+
+/// @brief Closes a file.
+/// @param fp The file pointer.
+fclose(fp);
+
+/// @brief Checks if the file pointer has reached the end of the file.
+/// @param fp The file pointer.
+/// @return 1 if the file pointer has reached the end of the file.
+feof(fp);
+
+/// @brief Reads a single character from a file.
+/// @param fp The file pointer.
+/// @return The character. 0 on end of file or error.
+fgetc(fp);
+
+/// @brief Prints text to a file.
+/// @param fp The file pointer.
+/// @param text The text to output to the file.
+/// @return The total number of characters written successfully. Otherwise a negative number.
+fprint(fp, text);
+
+/// @brief Prints text to a file including formatted values.
+/// @param fp The file pointer.
+/// @param format The text to output to the file, given the format.
+/// @param values The lookup table of values to print using the format text.
+fprintf(fp, format, values);

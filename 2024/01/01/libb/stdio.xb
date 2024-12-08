@@ -1,0 +1,93 @@
+#include <stdio>
+#include <sys>
+
+auto __console_x = 0, __console_y = 0;
+
+print(text)
+{
+	printf(text, NULL);
+}
+
+printf(format, values)
+{
+	if (format == NULL) { return; }
+	auto i = 0;
+	auto v = 0;
+	while (format[i] != 0) {
+		if (values != NULL && format[i] == '%') {
+			++i;
+			if (format[i] != 0) {
+				if (format[i] == 'c') { // character
+					// TODO IMPL
+				} else if (format[i] == 'i' || format[i] == 'd') { // signed integer
+					// TODO IMPL
+				} else if (format[i] == 'u') { // unsigned integer
+					// TODO IMPL
+				} else if (format[i] == 'x') { // lower-case hexadecimal
+					// TODO IMPL
+				} else if (format[i] == 'X') { // upper-case hexadecimal
+					// TODO IMPL
+				} else if (format[i] == 's') { // string
+					printf(values[v], NULL);
+				} else if (format[i] == 'n') { // don't print the value
+				} else if (format[i] == 'p') { // print pointer
+					// TODO IMPL
+				} else if (format[i] == '%') { // %
+					// TODO IMPL
+				}
+				++v;
+			}
+		} else if (format[i] == '\\') {
+			++i;
+			if (format[i] != 0) {
+				if (format[i] == 'n') { // newline
+					// TODO IMPL
+				} else if (format[i] == 't') { // tab
+					// TODO IMPL
+				} else if (format[i] == '\\') { // backslash
+					// TODO IMPL
+				} else if (format[i] == '0') { // blank, end of string
+					return;
+				}
+			}
+		} else {
+			// just print the format string
+			// TODO IMPL
+		}
+		++i;
+	}
+
+	// TODO send character map to monitor
+}
+
+auto __hw_disk = hwscan(0x0002); // Look for the disk to do disk I/O on.
+
+fopen(file, mode)
+{
+	// TODO IMPL
+}
+
+fclose(fp)
+{
+	// TODO IMPL
+}
+
+feof(fp)
+{
+	// TODO IMPL
+}
+
+fgetc(fp)
+{
+	// TODO IMPL
+}
+
+fprint(fp, text)
+{
+	fprintf(fp, text, NULL);
+}
+
+fprintf(fp, format, values)
+{
+	// TODO IMPL
+}

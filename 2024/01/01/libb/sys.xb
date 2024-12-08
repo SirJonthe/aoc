@@ -1,0 +1,225 @@
+#include <sys>
+#include <time>
+#include <stdlib>
+
+cpuid( void )
+{
+	auto id;
+	asm {
+		cpuid.
+		mov id.
+	}
+	return id;
+}
+
+did( void )
+{
+	auto id;
+	asm {
+		did.
+		mov id.
+	}
+	return id;
+}
+
+const __NUM_HWPORTS = 16; // The number of ports available on this hardware.
+auto __mid_counter = 0; // Message ID counter.
+
+// Constants.
+const PACKET_TYPE_PING = 3; // The constant representing a ping request.
+const PACKET_TYPE_DATA = 5; // The constant representing data transmission.
+const MAX_PAYLOAD_SIZE = 32 - PACKET_HEADER_WORD_SIZE;
+
+hwfull(port_index)
+{
+	auto f;
+	asm {
+		put port_index.
+		port.
+		full.
+		mov f.
+	}
+	return f;
+}
+
+hwpusht(port_index, msg_type, data_ptr, len, max_ms)
+{
+	// The packet data.
+	auto id    = cpuid();
+	auto clck  = clock();
+	auto type  = msg_type;
+	auto seq   = 0;
+	auto size;
+	auto irq   = 0; // We do not use this field.
+	auto mid   = __mid_counter++;
+
+	// Select the port to output the data to.
+	asm {
+		put port_index.
+		port.
+	}
+
+	// Split the data up into several numbered packages.
+	auto n = len / MAX_PAYLOAD_SIZE;
+	if (len % MAX_PAYLOAD_SIZE > 0 || n == 0) {
+		++n;
+	}
+	while (n-- > 0) {
+		while (hwfull(port_index)) {
+			if (clock() - clck >= max_ms) {
+				return 0;
+			}
+		}
+		if (len > MAX_PAYLOAD_SIZE) {
+			size = MAX_PAYLOAD_SIZE;
+			len -= MAX_PAYLOAD_SIZE;
+		} else {
+			size = len;
+			len = 0;
+		}
+		asm {
+			put &id, data_ptr.
+			pass. // Put the address of the header and the data, and send the values at the addresses to the selected port.
+		}
+		data_ptr += MAX_PAYLOAD_SIZE;
+		++seq;
+	}
+	return 1;
+}
+
+hwpush(port_index, data_ptr, len, max_ms)
+{
+	return hwpusht(port_index, PACKET_TYPE_DATA, data_ptr, len, max_ms);
+}
+
+hwpend(port_index)
+{
+	auto msg_pending;
+	asm {
+		put port_index.
+		port.
+		pend.
+		mov msg_pending.
+	}
+	return msg_pending;
+}
+
+hwid(port_index)
+{
+	// The packet data.
+	auto id;
+	auto clck;
+	auto type; 
+	auto seq;
+	auto size;
+	auto irq;
+	auto mid;
+	auto data[MAX_PAYLOAD_SIZE];
+
+	// First check if there is already an event on the bus we can peek.
+	if (hwpeek(port_index, &id, data) == 0) {
+		// Initialize a PING request.
+		id   = cpuid();
+		clck = clock();
+		type = PACKET_TYPE_PING; 
+		seq  = 0;
+		size = 0;
+		irq  = 0;
+
+		// Select the port to output the data to.
+		asm {
+			put port_index. // Select port.
+			port.           // Select port.
+			put &id, 0.     // Put the address of the header but we send no data, so just point to null.
+			pass.           // Send the values at the addresses to the selected port.
+		}
+
+		// We give a device 1 second to respond, checking every iteration.
+		auto poll_until = clock() + (CLOCKS_PER_SEC * 1);
+		while (hwpeek(port_index, &id, data) == 0) {
+			auto now = clock();
+			if (now > poll_until) {
+				return 0;
+			}
+		}
+	}
+	return id;
+}
+
+hwscan(id)
+{
+	auto i = 0;
+	while (i < __NUM_HWPORTS) {
+		if (hwid(i) == id) {
+			return i;
+		}
+		++i;
+	}
+	return -1;
+}
+
+hwpeek(port_index, header_ptr, data_ptr)
+{
+	auto pending = hwpend(port_index);
+	if (pending) {
+		asm {
+			put port_index.
+			port.
+			put header_ptr, data_ptr.
+			poll.
+		}
+	}
+	return pending;
+}
+
+const __IRQ_TABLE_SIZE = 256; // The number of software IRQ channels available.
+auto __irq_table[__IRQ_TABLE_SIZE]; // A table with function pointers to be called upon an interrupt request. Takes two arguments; a pointer to packet header data, and a pointer to packet payload data.
+
+hwpoll(port_index, header_ptr, data_ptr)
+{
+	auto pending = hwpeek(port_index, header_ptr, data_ptr);
+	if (pending) {
+		asm ack.
+		auto irq = header_ptr[PACKET_HEADER_IRQ];
+		if (irq < __IRQ_TABLE_SIZE && __irq_table[irq]) {
+			auto fn = __irq_table[irq];
+			fn(header_ptr, data_ptr);
+		}
+	}
+	return pending;
+}
+
+sleep(ms)
+{
+	auto now;
+	asm {
+		clock.
+		mov now.
+	}
+	auto to = now + ms;
+	if (to < now) {
+		while (now > 0) {
+			asm {
+				clock.
+				mov now.
+			}
+		}
+	}
+	while (now < to) {
+		asm {
+			clock.
+			mov now.
+		}
+	}
+}
+
+run(bin)
+{
+	// TODO IMPL
+	return -1;
+}
+
+shutdown( void )
+{
+	return hwpusht(hwscan(0x0004), 7, NULL, 0, CLOCKS_PER_SEC);
+}

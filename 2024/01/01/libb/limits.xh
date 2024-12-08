@@ -1,0 +1,2 @@
+const CHAR_BIT =     16; // The number of bits per byte.
+const UINT_MAX = 0xffff; // The maximum representable number for a word.

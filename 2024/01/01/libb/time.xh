@@ -1,0 +1,5 @@
+const CLOCKS_PER_SEC = 1000;
+
+/// @brief Returns the current clock state since the start of the program.
+/// @return The current clock state since the start of the program.
+clock( void );
